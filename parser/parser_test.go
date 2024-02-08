@@ -74,7 +74,7 @@ func TestIdentifierExpression(t *testing.T) {
 	program := parser.ParseProgram()
 	checkParserErrors(t, parser)
 
-	require.Lenf(t, program.Statements, 1, "program has not enough statments. got=%d", len(program.Statements))
+	require.Len(t, program.Statements, 1, "program has not enough statments")
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatment)
 	require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
@@ -84,6 +84,26 @@ func TestIdentifierExpression(t *testing.T) {
 
 	assert.Equal(t, "foobar", ident.Value, "ident.Value")
 	assert.Equal(t, "foobar", ident.TokenLiteral(), "ident.TokenLiteral")
+}
+
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "5;"
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	require.Len(t, program.Statements, 1, "program has not enough statments")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatment)
+	require.Truef(t, ok, "program.Statments[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	require.Truef(t, ok, "exp not *ast.IntegerLiteral. got=%T", stmt.Expression)
+
+	assert.Equal(t, int64(5), literal.Value, "Literal value not correct")
+	assert.Equal(t, "5", literal.TokenLiteral(), "literal.TokenLiteral() not correct")
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
