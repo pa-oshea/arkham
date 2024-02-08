@@ -5,6 +5,7 @@ import (
 	"arkham/lexer"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,6 +57,33 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 		return false
 	}
 	return true
+}
+
+func TestReturnStatment(t *testing.T) {
+	input := `
+	return 5;
+	return 10;
+	return 993322;
+	`
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	require.Len(t, program.Statements, 3, "program.Statments")
+
+	for _, stmt := range program.Statements {
+		returnStmt, ok := stmt.(*ast.ReturnStatment)
+
+		if !assert.True(t, ok, "stmt not *ast.returnStatment. got=%T", stmt) {
+			continue
+		}
+
+		assert.Equal(t, "return", returnStmt.TokenLiteral())
+
+	}
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
