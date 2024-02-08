@@ -3,6 +3,7 @@ package parser
 import (
 	"arkham/ast"
 	"arkham/lexer"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -104,6 +105,55 @@ func TestIntegerLiteralExpression(t *testing.T) {
 
 	assert.Equal(t, int64(5), literal.Value, "Literal value not correct")
 	assert.Equal(t, "5", literal.TokenLiteral(), "literal.TokenLiteral() not correct")
+}
+
+func TestParsingPrefixExpression(t *testing.T) {
+	prefixTests := []struct {
+		input        string
+		operator     string
+		integerValue int64
+	}{
+		{"!5", "!", 5},
+		{"-15", "-", 15},
+	}
+
+	for _, tt := range prefixTests {
+		lexer := lexer.New(tt.input)
+		parser := New(lexer)
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		require.Len(t, program.Statements, 1, "program.Statments has not enough statments")
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatment)
+		require.Truef(t, ok, "program.Statments[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
+
+		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		require.Truef(t, ok, "stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
+		require.Equal(t, tt.operator, exp.Operator)
+
+		if !testIntegerLiteral(t, exp.Right, tt.integerValue) {
+			return
+		}
+	}
+}
+
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
+	integ, ok := il.(*ast.IntegerLiteral)
+	if !ok {
+		t.Errorf("il not *ast.IntegerLiteral. got=%T", il)
+		return false
+	}
+	if integ.Value != value {
+		t.Errorf("integ.Value not %d. got=%d", value, integ.Value)
+		return false
+	}
+	if integ.TokenLiteral() != fmt.Sprintf("%d", value) {
+		t.Errorf("integ.TokenLiteral not %d. got=%s", value,
+			integ.TokenLiteral())
+		return false
+	}
+	return true
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
