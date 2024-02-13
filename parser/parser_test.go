@@ -317,6 +317,38 @@ func TestBooleanExpression(t *testing.T) {
 	}
 }
 
+func TestIfExpression(t *testing.T) {
+	input := `if (x < y) { x }`
+
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	require.Len(t, program.Statements, 1, "program.Body does not contain correct number of statements")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.Truef(t, ok, "program.Statements is not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	require.Truef(t, ok, "stmt.Expression is not ast.IfExpression. got=%T", stmt.Expression)
+
+	if !testInfixExpression(t, exp.Condition, "x", "<", "y") {
+		return
+	}
+
+	assert.Len(t, exp.Consequence.Statements, 1, "consequence is not 1 statements")
+
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	require.Truef(t, ok, "Statements[0] is not ast.ExpressionStatement. got=%T", exp.Consequence.Statements[0])
+
+	if !testIdentifier(t, consequence.Expression, "x") {
+		return
+	}
+
+	assert.Nil(t, exp.Alternative, "exp.Alternative.Statements was not nil")
+}
+
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
 	switch v := expected.(type) {
 	case int:
