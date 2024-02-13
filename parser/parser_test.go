@@ -10,16 +10,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func initProgramTest(t *testing.T, input string) *ast.Program {
+	lexer := lexer.New(input)
+	parser := New(lexer)
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	return program
+}
+
 func TestLetStatements(t *testing.T) {
 	input := `
 	let x = 5;
 	let y = 10;
 	let foobar = 838383;
 `
-	l := lexer.New(input)
-	p := New(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program := initProgramTest(t, input)
 
 	require.NotNil(t, program, "ParseProgram return nil")
 	require.Len(t, program.Statements, 3)
@@ -39,25 +46,21 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
-func TestReturnStatment(t *testing.T) {
+func TestReturnStatement(t *testing.T) {
 	input := `
 	return 5;
 	return 10;
 	return 993322;
 	`
 
-	lexer := lexer.New(input)
-	parser := New(lexer)
+	program := initProgramTest(t, input)
 
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
-
-	require.Len(t, program.Statements, 3, "program.Statments")
+	require.Len(t, program.Statements, 3, "program.Statements")
 
 	for _, stmt := range program.Statements {
-		returnStmt, ok := stmt.(*ast.ReturnStatment)
+		returnStmt, ok := stmt.(*ast.ReturnStatement)
 
-		if !assert.Truef(t, ok, "stmt not *ast.returnStatment. got=%T", stmt) {
+		if !assert.Truef(t, ok, "stmt not *ast.returnStatement. got=%T", stmt) {
 			continue
 		}
 
@@ -69,16 +72,12 @@ func TestReturnStatment(t *testing.T) {
 func TestIdentifierExpression(t *testing.T) {
 	input := "foobar;"
 
-	lexer := lexer.New(input)
-	parser := New(lexer)
+	program := initProgramTest(t, input)
 
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
-
-	require.Len(t, program.Statements, 1, "program has not enough statments")
+	require.Len(t, program.Statements, 1, "program has not enough statements")
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
+	require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 	ident, ok := stmt.Expression.(*ast.Identifier)
 	require.Truef(t, ok, "exp nto *ast.Identifier. got=%T", stmt.Expression)
@@ -90,15 +89,12 @@ func TestIdentifierExpression(t *testing.T) {
 func TestIntegerLiteralExpression(t *testing.T) {
 	input := "5;"
 
-	lexer := lexer.New(input)
-	parser := New(lexer)
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	program := initProgramTest(t, input)
 
-	require.Len(t, program.Statements, 1, "program has not enough statments")
+	require.Len(t, program.Statements, 1, "program has not enough statements")
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	require.Truef(t, ok, "program.Statments[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
+	require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
 	require.Truef(t, ok, "exp not *ast.IntegerLiteral. got=%T", stmt.Expression)
@@ -120,15 +116,12 @@ func TestParsingPrefixExpression(t *testing.T) {
 	}
 
 	for _, tt := range prefixTests {
-		lexer := lexer.New(tt.input)
-		parser := New(lexer)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
+		program := initProgramTest(t, tt.input)
 
-		require.Len(t, program.Statements, 1, "program.Statments has not enough statments")
+		require.Len(t, program.Statements, 1, "program.Statements has not enough statements")
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		require.Truef(t, ok, "program.Statments[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
+		require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		require.Truef(t, ok, "stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
@@ -161,15 +154,12 @@ func TestParsingInfixExpression(t *testing.T) {
 	}
 
 	for _, tt := range infixTests {
-		lexer := lexer.New(tt.input)
-		parser := New(lexer)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
+		program := initProgramTest(t, tt.input)
 
-		require.Len(t, program.Statements, 1, "program.Statments does not contain the correct number of statements")
+		require.Len(t, program.Statements, 1, "program.Statements does not contain the correct number of statements")
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-		require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatment. got=%T", program.Statements[0])
+		require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
 		exp, ok := stmt.Expression.(*ast.InfixExpression)
 		require.Truef(t, ok, "exp is not ast.InfixExpression. got=%T", stmt.Expression)
 
@@ -280,12 +270,9 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		lexer := lexer.New(tt.input)
-		parser := New(lexer)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
-		actual := program.String()
-		assert.Equal(t, tt.expected, actual)
+		program := initProgramTest(t, tt.input)
+
+		assert.Equal(t, tt.expected, program.String())
 	}
 }
 
@@ -299,10 +286,7 @@ func TestBooleanExpression(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		lexer := lexer.New(tt.input)
-		parser := New(lexer)
-		program := parser.ParseProgram()
-		checkParserErrors(t, parser)
+		program := initProgramTest(t, tt.input)
 
 		require.Len(t, program.Statements, 1, "program has not enough statements")
 
@@ -320,10 +304,7 @@ func TestBooleanExpression(t *testing.T) {
 func TestIfExpression(t *testing.T) {
 	input := `if (x < y) { x }`
 
-	lexer := lexer.New(input)
-	parser := New(lexer)
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	program := initProgramTest(t, input)
 
 	require.Len(t, program.Statements, 1, "program.Body does not contain correct number of statements")
 
@@ -347,6 +328,54 @@ func TestIfExpression(t *testing.T) {
 	}
 
 	assert.Nil(t, exp.Alternative, "exp.Alternative.Statements was not nil")
+}
+
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `fn(x, y) { x + y; }`
+
+	program := initProgramTest(t, input)
+
+	require.Len(t, program.Statements, 1, "program.Body does not contain enough statements")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.Truef(t, ok, "program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	function, ok := stmt.Expression.(*ast.FunctionLiteral)
+	require.True(t, ok, "stmt.Expression is not ast.FunctionLiteral. got=%T", stmt.Expression)
+	require.Len(t, function.Parameters, 2, "Not enough function parameters. need 2")
+
+	testLiteralExpression(t, function.Parameters[0], "x")
+	testLiteralExpression(t, function.Parameters[1], "y")
+
+	require.Len(t, function.Body.Statements, 1, "function.Body.Statements incorrect statements")
+
+	bodyStmt, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
+	require.Truef(t, ok, "Function body stmt is not ast.ExpressionStatement. got=%T", function.Body.Statements[0])
+	testInfixExpression(t, bodyStmt.Expression, "x", "+", "y")
+}
+
+func TestFunctionParameterParsing(t *testing.T) {
+	tests := []struct {
+		input          string
+		expectedParams []string
+	}{
+		{input: "fn() {};", expectedParams: []string{}},
+		{input: "fn(x) {};", expectedParams: []string{"x"}},
+		{input: "fn(x, y, z) {};", expectedParams: []string{"x", "y", "z"}},
+	}
+
+	for _, tt := range tests {
+		program := initProgramTest(t, tt.input)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		function := stmt.Expression.(*ast.FunctionLiteral)
+
+		assert.Len(t, function.Parameters, len(tt.expectedParams), "length parameters wrong")
+
+		for i, ident := range tt.expectedParams {
+			testLiteralExpression(t, function.Parameters[i], ident)
+		}
+	}
 }
 
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
