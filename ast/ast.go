@@ -94,14 +94,14 @@ func (rs *ReturnStatment) String() string {
 	return out.String()
 }
 
-type ExpressionStatment struct {
+type ExpressionStatement struct {
 	Token      token.Token
 	Expression Expression
 }
 
-func (es *ExpressionStatment) statementNode()       {}
-func (es *ExpressionStatment) TokenLiteral() string { return es.Token.Literal }
-func (es *ExpressionStatment) String() string {
+func (es *ExpressionStatement) statementNode()       {}
+func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Literal }
+func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
 		return es.Expression.String()
 	}
@@ -153,3 +153,12 @@ func (oe *InfixExpression) String() string {
 	out.WriteString(")")
 	return out.String()
 }
+
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
+func (b *Boolean) expressionNode()      {}
+func (b *Boolean) TokenLiteral() string { return b.Token.Literal }
+func (b *Boolean) String() string       { return b.Token.Literal }
