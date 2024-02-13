@@ -268,6 +268,18 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"!(true == true)",
 			"(!(true == true))",
 		},
+		{
+			"a + add(b * c) + d",
+			"((a + add((b * c))) + d)",
+		},
+		{
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+		},
+		{
+			"add(a + b + c * d / f + g)",
+			"add((((a + b) + ((c * d) / f)) + g))",
+		},
 	}
 	for _, tt := range tests {
 		program := initProgramTest(t, tt.input)
@@ -376,6 +388,28 @@ func TestFunctionParameterParsing(t *testing.T) {
 			testLiteralExpression(t, function.Parameters[i], ident)
 		}
 	}
+}
+
+func TestCallExpressionParsing(t *testing.T) {
+	input := "add(1, 2 * 3, 4 + 5);"
+	program := initProgramTest(t, input)
+
+	require.Len(t, program.Statements, 1, "program.Statements does not contain enough statements")
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.Truef(t, ok, "stmt is not ast.ExpressionStatement. got=%T", program.Statements[0])
+
+	exp, ok := stmt.Expression.(*ast.CallExpression)
+	require.Truef(t, ok, "stmt.Expression is not ast.CallExpression. got=%T", stmt.Expression)
+
+	if !testIdentifier(t, exp.Function, "add") {
+		return
+	}
+
+	require.Len(t, exp.Arguments, 3, "wrong length of arguments.")
+	testLiteralExpression(t, exp.Arguments[0], 1)
+	testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
+	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
 }
 
 func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) bool {
