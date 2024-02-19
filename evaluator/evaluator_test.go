@@ -49,6 +49,17 @@ func TestEvalStringLiteral(t *testing.T) {
 	assert.Equal(t, "Hello World!", str.Value)
 }
 
+func TestStringConcatenation(t *testing.T) {
+	input := `Hello" + " " + "World!"`
+
+	evaluated := testEval(input)
+
+	str, ok := evaluated.(*object.String)
+	require.True(t, ok, "object is not a string. got=%T (%+v)", evaluated, evaluated)
+
+	assert.Equal(t, "Hello World!", str.Value)
+}
+
 func TestEvalBooleanExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -196,6 +207,10 @@ func TestErrorHandling(t *testing.T) {
 		{
 			"foobar",
 			"identifier not found: foobar",
+		},
+		{
+			`"Hello" - "World"`,
+			"unknown operator: STRING - STRING",
 		},
 	}
 
