@@ -6,6 +6,7 @@ import (
 	"arkham/parser"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,6 +36,17 @@ func TestEvalIntegerExpression(t *testing.T) {
 		evaluated := testEval(tt.input)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
+}
+
+func TestEvalStringLiteral(t *testing.T) {
+	input := `"Hello world!"`
+
+	evaluated := testEval(input)
+
+	str, ok := evaluated.(*object.String)
+	require.True(t, ok, "object is not a string. got=%T (%+v)", evaluated, evaluated)
+
+	assert.Equal(t, "Hello World!", str.Value)
 }
 
 func TestEvalBooleanExpression(t *testing.T) {

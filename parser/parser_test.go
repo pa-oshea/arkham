@@ -105,6 +105,18 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	assert.Equal(t, "5", literal.TokenLiteral(), "literal.TokenLiteral() not correct")
 }
 
+func TestStringLiteralExpression(t *testing.T) {
+	input := `"hello world";`
+
+	program := initProgramTest(t, input)
+
+	stmt := program.Statements[0].(*ast.ExpressionStatement)
+	literal, ok := stmt.Expression.(*ast.StringLiteral)
+	require.True(t, ok, "exp not *ast.StringLiteral. got=%T", stmt.Expression)
+
+	assert.Equal(t, "hello world", literal.Value)
+}
+
 func TestParsingPrefixExpression(t *testing.T) {
 	prefixTests := []struct {
 		input        string

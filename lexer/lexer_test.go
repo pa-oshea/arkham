@@ -26,7 +26,9 @@ func TestNextToken(t *testing.T) {
 	}
 
 	10 == 10;
-	10 != 9;`
+	10 != 9;
+	"foobar"
+	"foo bar"`
 
 	tests := []struct {
 		index           int
@@ -106,7 +108,9 @@ func TestNextToken(t *testing.T) {
 		{70, token.NOT_EQ, "!="},
 		{71, token.INT, "9"},
 		{72, token.SEMICOLON, ";"},
-		{73, token.EOF, ""},
+		{73, token.STRING, "foobar"},
+		{74, token.STRING, "foo bar"},
+		{75, token.EOF, ""},
 	}
 	l := New(input)
 	for i, tt := range tests {
